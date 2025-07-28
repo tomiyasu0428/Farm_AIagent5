@@ -9,6 +9,9 @@ from src.agents.base_agent import BaseAgent
 from src.models.state import AgriAgentState
 from src.database import get_database
 from src.tools.field_tools import FieldRetrievalTool
+from src.tools.work_history_tools import WorkHistoryRetrievalTool
+from src.tools.task_management_tools import TaskManagementTool
+from src.tools.material_info_tools import MaterialInfoTool
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +23,18 @@ class ReadAgent(BaseAgent):
         """Initialize read agent with LangChain tools."""
         super().__init__("ReadAgent")
 
-        # Initialize tools
+        # Initialize all tools
         self.field_tool = FieldRetrievalTool()
-        self.tools = [self.field_tool]
+        self.work_history_tool = WorkHistoryRetrievalTool()
+        self.task_tool = TaskManagementTool()
+        self.material_tool = MaterialInfoTool()
+        
+        self.tools = [
+            self.field_tool,
+            self.work_history_tool, 
+            self.task_tool,
+            self.material_tool
+        ]
 
         # Create ReAct agent prompt using the hub template
         from langchain import hub
@@ -42,9 +54,17 @@ class ReadAgent(BaseAgent):
 利用可能なツール:
 {tools}
 
+ツール使用のガイドライン:
+- get_field_information: 圃場情報、面積、土壌、栽培状況
+- get_work_history: 作業履歴、過去の農作業記録
+- get_task_information: 予定タスク、今後の作業計画
+- get_material_information: 資材情報、在庫状況、農薬・肥料データ
+
+回答は300文字以内で、農家の方が理解しやすい言葉で答えてください。
+
 Use the following format:
 
-Question: the input question you must answer
+Question: the input question you must answer  
 Thought: you should always think about what to do
 Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action
@@ -76,8 +96,8 @@ Thought:{agent_scratchpad}""")
 
             logger.info(f"Processing read request with tools: {user_message}")
 
-            # Check if this is a field-related query
-            if await self._is_field_query(user_message):
+            # Check if this query can be handled by LangChain tools
+            if await self._should_use_tools(user_message):
                 # Use LangChain tool-calling agent
                 result = await self.agent_executor.ainvoke({"input": user_message})
 
@@ -85,11 +105,11 @@ Thought:{agent_scratchpad}""")
 
                 return {
                     **self._format_response(response),
-                    "query_results": [{"tool_used": "field_tool", "success": True}],
+                    "query_results": [{"tools_used": "langchain_agent", "success": True}],
                     "extracted_data": {
-                        "query_type": "field_info_with_tools",
+                        "query_type": "langchain_tools",
                         "data_found": True,
-                        "tools_used": ["get_field_information"],
+                        "tools_available": ["get_field_information", "get_work_history", "get_task_information", "get_material_information"],
                     },
                 }
             else:
@@ -100,8 +120,41 @@ Thought:{agent_scratchpad}""")
             logger.error(f"Error in read agent processing: {e}")
             return self._format_response("データの取得中にエラーが発生しました。もう一度お試しください。")
 
+    async def _should_use_tools(self, message: str) -> bool:
+        """Determine if the message should be handled by LangChain tools."""
+        message_lower = message.lower()
+        
+        # Field-related keywords
+        field_keywords = ["圃場", "畑", "田", "ハウス", "field", "場所", "土地", "栽培", "作物", "面積", "ha", "ヘクタール", "平米", "㎡"]
+        
+        # Work history keywords
+        work_keywords = ["作業", "履歴", "記録", "実施", "実行", "過去", "前回", "work", "history", "やった", "した"]
+        
+        # Task/schedule keywords  
+        task_keywords = ["予定", "タスク", "計画", "今度", "次", "今後", "予約", "スケジュール", "task", "schedule", "予定", "する予定"]
+        
+        # Material keywords
+        material_keywords = ["資材", "農薬", "肥料", "種子", "在庫", "材料", "material", "stock", "薬", "肥", "種"]
+        
+        # Check for any tool-related keywords
+        all_keywords = field_keywords + work_keywords + task_keywords + material_keywords
+        if any(keyword in message_lower for keyword in all_keywords):
+            return True
+            
+        # Check for actual field names from database (common field names)
+        common_field_names = ["橋前", "橋向こう", "登山道前", "豊緑", "toyomidori", "若菜"]
+        if any(field_name in message_lower for field_name in common_field_names):
+            return True
+            
+        # Check for question patterns that suggest data retrieval
+        question_patterns = ["教えて", "知りたい", "確認", "見せて", "どう", "どこ", "いつ", "何", "どの", "どれ"]
+        if any(pattern in message_lower for pattern in question_patterns):
+            return True
+            
+        return False
+
     async def _is_field_query(self, message: str) -> bool:
-        """Determine if the message is asking about field information."""
+        """Legacy method - determine if the message is asking about field information."""
         field_keywords = ["圃場", "畑", "田", "ハウス", "field", "場所", "土地", "栽培", "作物", "面積", "ha", "ヘクタール", "平米", "㎡"]
         message_lower = message.lower()
         
