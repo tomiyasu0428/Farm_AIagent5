@@ -4,10 +4,10 @@ uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
 # LangChain and LangGraph
-langchain==0.1.0
-langgraph==0.0.20
-langchain-google-genai==0.0.6
-langsmith==0.0.69
+langchain==0.2.16
+langgraph==0.1.19
+langchain-google-genai==1.0.10
+langsmith==0.1.99
 
 # Database
 motor==3.3.2
@@ -22,8 +22,8 @@ google-cloud-pubsub==2.18.4
 
 # Environment and configuration
 python-dotenv==1.0.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic>=2.7.4
+pydantic-settings>=2.1.0
 
 # Utilities
 httpx==0.25.2

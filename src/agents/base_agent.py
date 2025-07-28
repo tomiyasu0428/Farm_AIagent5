@@ -23,7 +23,15 @@ class BaseAgent(ABC):
             google_api_key=settings.google_api_key,
             temperature=0.1
         )
-        logger.info(f"Initialized {self.name} agent")
+        
+        # Add LangSmith metadata for tracing
+        if settings.langchain_tracing_v2:
+            self.llm = self.llm.with_config({
+                "tags": [f"agent:{name}", "farm-ai-agent", "gemini-2.5-flash"],
+                "metadata": {"agent_name": name, "model": "gemini-2.5-flash"}
+            })
+        
+        logger.info(f"Initialized {self.name} agent with LangSmith tracing: {settings.langchain_tracing_v2}")
     
     @abstractmethod
     async def process(self, state: AgriAgentState) -> Dict[str, Any]:

@@ -61,7 +61,7 @@ async def test_detailed_scenarios():
             # Create test state
             test_state: AgriAgentState = {
                 "messages": [HumanMessage(content=scenario['message'])],
-                "user_id": "test_farmer_001",
+                "user_id": "test_user_001",  # Updated to match new user schema
                 "thread_id": "test_thread_001",
                 "next_agent": "",
                 "pending_confirmation": {},

@@ -1,5 +1,6 @@
 """Main FastAPI application for the Agricultural AI Agent system."""
 
+import os
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -11,12 +12,21 @@ from src.database import init_database
 from src.api.webhook import webhook_router
 
 
+# Initialize LangSmith tracing if enabled
+def init_langsmith():
+    """Initialize LangSmith tracing configuration."""
+    from src.utils.langsmith_config import init_langsmith_environment
+    init_langsmith_environment()
+
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Initialize LangSmith
+init_langsmith()
 
 
 @asynccontextmanager
@@ -51,7 +61,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(webhook_router, prefix="/api/v1")
+app.include_router(webhook_router)
 
 
 @app.get("/")

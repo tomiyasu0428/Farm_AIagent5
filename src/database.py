@@ -41,21 +41,24 @@ async def create_indexes():
     """Create necessary database indexes."""
     indexes_to_create = [
         # (collection_name, index_spec, options)
-        ("farmers", "line_user_id", {"unique": True}),
+        ("users", "line_user_id", {"unique": True, "sparse": True}),  # Unified user collection
+        ("users", "role", {}),
         ("groups", "group_id", {"unique": True}),
         ("groups", "members.line_user_id", {}),
-        ("fields", "farmer_line_id", {}),
+        ("fields", "field_code", {"unique": True, "sparse": True}),
         ("fields", "name", {}),
-        ("fields", "field_code", {"unique": True, "sparse": True}),  # sparse for existing data
         ("tasks", [("field_id", 1), ("status", 1)], {}),
         ("tasks", "scheduled_date", {}),
+        ("tasks", "task_id", {"unique": True, "sparse": True}),
         ("work_logs", [("user_id", 1), ("work_date", -1), ("category", 1)], {}),
         ("work_logs", [("user_id", 1), ("extracted_data.field_id", 1), ("work_date", -1)], {}),
         ("work_logs", [("user_id", 1), ("extracted_data.material_ids", 1)], {}),
+        ("work_logs", "log_id", {"unique": True, "sparse": True}),
         ("farm_data", [("field_id", 1), ("timestamp", -1)], {}),
         ("farm_data", "source_type", {}),
         ("agent_states", "thread_id", {"unique": True}),
         ("materials", "name", {}),
+        ("materials", "type", {}),
         ("crops", [("name", 1), ("category", 1)], {}),
     ]
     
