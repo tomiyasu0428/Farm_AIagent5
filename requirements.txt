@@ -1,0 +1,31 @@
+# FastAPI and web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# LangChain and LangGraph
+langchain==0.1.0
+langgraph==0.0.20
+langchain-google-genai==0.0.6
+langsmith==0.0.69
+
+# Database
+motor==3.3.2
+pymongo==4.6.0
+
+# LINE Bot SDK
+line-bot-sdk==3.8.0
+
+# Google Cloud
+google-cloud-functions==1.16.0
+google-cloud-pubsub==2.18.4
+
+# Environment and configuration
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Utilities
+httpx==0.25.2
+aiofiles==23.2.1
+python-jose[cryptography]==3.3.0

@@ -82,17 +82,67 @@ MongoDB を使用したドキュメント指向設計：
 
 ```
 Farm_AIagent5/
-├── docs/                                    # 設計書・要件定義書
+├── src/                                    # メインソースコード
+│   ├── agents/                            # AIエージェント
+│   │   ├── base_agent.py                 # ベースエージェントクラス
+│   │   ├── supervisor.py                 # 司令塔エージェント
+│   │   ├── read_agent.py                 # データ読み取りエージェント
+│   │   └── graph.py                      # LangGraphワークフロー定義
+│   ├── api/                              # API エンドポイント
+│   │   └── webhook.py                    # LINE Webhook ハンドラー
+│   ├── models/                           # データモデル
+│   │   ├── state.py                      # エージェント状態定義
+│   │   └── mongodb_saver.py              # MongoDB チェックポイントセーバー
+│   ├── config.py                         # 設定管理
+│   ├── database.py                       # データベース接続
+│   └── main.py                           # FastAPI アプリケーション
+├── docs/                                 # 設計書・要件定義書
 │   ├── 2025-07-28_プロジェクトタスクリスト.md
 │   ├── LangGraph_マルチエージェント_要件定義書_v4.md
 │   └── 2025-07-26_MongoDB_総合設計書.md
-├── CLAUDE.md                               # Claude Code 用ガイダンス
-└── README.md                               # このファイル
+├── requirements.txt                      # Python依存関係
+├── run.py                               # 開発用起動スクリプト
+├── test_basic.py                        # 基本テストスクリプト
+├── CLAUDE.md                            # Claude Code 用ガイダンス
+└── README.md                            # このファイル
 ```
 
 ## 🛠️ 開発環境セットアップ
 
-**注意**: 現在のリポジトリは設計・要件定義段階です。実装コードは開発フェーズの進行に合わせて追加予定です。
+### Phase 1 基盤構築完了
+基本的なLangGraphマルチエージェントシステムと LINE Webhook 基盤が実装されました。
+
+### 実行方法
+
+1. **依存関係のインストール**
+```bash
+pip install -r requirements.txt
+```
+
+2. **環境変数の設定** 
+`.env` ファイルに必要な設定を記述：
+```bash
+# MongoDB
+MONGODB_URI=mongodb+srv://...
+MONGODB_DATABASE=agri_ai_db
+
+# LINE Bot
+LINE_CHANNEL_ACCESS_TOKEN=your-token
+LINE_CHANNEL_SECRET=your-secret
+
+# Google Gemini
+GOOGLE_API_KEY=your-api-key
+```
+
+3. **開発サーバーの起動**
+```bash
+python run.py
+```
+
+4. **基本テストの実行**
+```bash
+python test_basic.py
+```
 
 ### 前提条件
 - Python 3.9+
