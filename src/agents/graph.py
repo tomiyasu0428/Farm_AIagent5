@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime
 from typing import Dict, Any
-from langgraph.graph import Graph
+from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage
 
 from src.models.state import AgriAgentState
@@ -21,26 +21,34 @@ read_agent = ReadAgent()
 checkpoint_saver = MongoDBSaver()
 
 
-def create_graph() -> Graph:
+def create_graph():
     """Create and configure the LangGraph workflow."""
     
-    # Create the graph
-    graph = Graph()
+    # Create the state graph
+    graph = StateGraph(AgriAgentState)
     
     # Add nodes
     graph.add_node("supervisor", supervisor_node)
     graph.add_node("read_agent", read_agent_node)
-    graph.add_node("end", end_node)
     
-    # Add edges
-    graph.add_edge("supervisor", "read_agent", condition=lambda state: state.get("next_agent") == "ReadAgent")
-    graph.add_edge("supervisor", "end", condition=lambda state: state.get("next_agent") != "ReadAgent")
-    graph.add_edge("read_agent", "end")
+    # Add conditional edges
+    graph.add_conditional_edges(
+        "supervisor",
+        lambda state: "read_agent" if state.get("next_agent") == "ReadAgent" else END,
+        {
+            "read_agent": "read_agent",
+            END: END
+        }
+    )
+    
+    # ReadAgent always goes to END
+    graph.add_edge("read_agent", END)
     
     # Set entry point
     graph.set_entry_point("supervisor")
     
-    return graph
+    # Compile the graph
+    return graph.compile()
 
 
 async def supervisor_node(state: AgriAgentState) -> Dict[str, Any]:
@@ -97,10 +105,7 @@ async def read_agent_node(state: AgriAgentState) -> Dict[str, Any]:
         }
 
 
-async def end_node(state: AgriAgentState) -> Dict[str, Any]:
-    """End node - finalize processing."""
-    logger.info("Reached end node")
-    return state
+# Remove end_node as we use END from StateGraph
 
 
 # Create the graph instance
@@ -140,8 +145,8 @@ async def process_user_message(user_id: str, message: str) -> str:
         # Run the graph
         logger.info(f"Processing message from user {user_id}: {message}")
         
-        # For now, run without checkpointing (will add later)
-        final_state = await app_graph.ainvoke(initial_state)
+        # Run the graph with config
+        final_state = await app_graph.ainvoke(initial_state, config)
         
         # Extract response from final state
         if final_state.get("messages"):
