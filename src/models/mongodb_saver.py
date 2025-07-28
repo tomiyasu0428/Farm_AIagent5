@@ -4,7 +4,23 @@ import json
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from langgraph.checkpoint import BaseCheckpointSaver
+try:
+    from langgraph.checkpoint import BaseCheckpointSaver
+except ImportError:
+    # For newer versions of langgraph
+    try:
+        from langgraph.checkpoint.base import BaseCheckpointSaver
+    except ImportError:
+        # Fallback - create a simple base class
+        class BaseCheckpointSaver:
+            async def aput(self, config, checkpoint, metadata):
+                raise NotImplementedError
+            
+            async def aget(self, config):
+                raise NotImplementedError
+            
+            async def alist(self, config, limit=None, before=None):
+                raise NotImplementedError
 from langchain_core.runnables import RunnableConfig
 
 from src.database import get_database

@@ -19,7 +19,7 @@ class BaseAgent(ABC):
         """Initialize base agent."""
         self.name = name
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-pro",
+            model="gemini-2.5-flash",
             google_api_key=settings.google_api_key,
             temperature=0.1
         )
