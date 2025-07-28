@@ -12,6 +12,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 from src.config import settings
 from src.agents.graph import process_user_message
+from src.utils.langsmith_config import session_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,9 @@ async def handle_text_message_direct(user_id: str, message_text: str, reply_toke
     """Handle text message from LINE with direct parameters."""
     try:
         logger.info(f"Received message from {user_id}: {message_text}")
+        
+        # Update session tracking for LangSmith
+        session_tracker.update_session(user_id)
         
         # Process message through LangGraph
         response = await process_user_message(user_id, message_text)

@@ -10,6 +10,7 @@ from src.models.state import AgriAgentState
 from src.models.mongodb_saver import MongoDBSaver
 from src.agents.supervisor import SupervisorAgent
 from src.agents.read_agent import ReadAgent
+from src.utils.langsmith_config import session_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -135,10 +136,18 @@ async def process_user_message(user_id: str, message: str) -> str:
             "session_metadata": {}
         }
         
-        # Configuration for checkpointing
+        # Configuration for checkpointing and LangSmith tracing
+        session_metadata = session_tracker.get_session_metadata(user_id)
         config = {
             "configurable": {
                 "thread_id": user_id
+            },
+            "tags": ["farm-ai-agent", "langgraph-workflow", f"user:{user_id}"],
+            "metadata": {
+                "user_id": user_id,
+                "message": message[:100],  # First 100 chars for privacy
+                "workflow": "agri-agent-graph",
+                **session_metadata
             }
         }
         

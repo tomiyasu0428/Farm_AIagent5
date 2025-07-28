@@ -43,6 +43,8 @@ class FieldRetrievalTool(BaseTool):
     async def _arun(self, query_type: str, search_value: Optional[str] = None, limit: int = 30) -> str:
         """Execute field query with self-correction mechanism."""
         try:
+            logger.info(f"FieldRetrievalTool called with: query_type={query_type}, search_value={search_value}, limit={limit}")
+            
             # Input validation and correction
             corrected_params = await self._validate_and_correct_input(query_type, search_value, limit)
 
