@@ -81,8 +81,9 @@ class ReadAgent(BaseAgent):
         
         try:
             if query_type == "field_info":
-                # Get field information for the user
-                fields = await database.fields.find({"farmer_line_id": user_id}).to_list(10)
+                # Get field information - Note: fields don't have direct user association in current schema
+                # For now, get all fields (in production, would need user-field relationship)
+                fields = await database.fields.find({}).to_list(10)
                 results = fields
                 
             elif query_type == "work_history":
@@ -94,23 +95,12 @@ class ReadAgent(BaseAgent):
                 results = work_logs
                 
             elif query_type == "task_list":
-                # Get pending tasks
-                # First get user's fields, then find tasks for those fields
-                user_fields = await database.fields.find(
-                    {"farmer_line_id": user_id}, 
-                    {"_id": 1}
-                ).to_list(100)
-                
-                if user_fields:
-                    field_ids = [field["_id"] for field in user_fields]
-                    tasks = await database.tasks.find(
-                        {
-                            "field_id": {"$in": field_ids},
-                            "status": {"$in": ["pending", "in_progress"]}
-                        },
-                        sort=[("scheduled_date", 1)]
-                    ).limit(10).to_list(10)
-                    results = tasks
+                # Get pending tasks - for now get all tasks (would need user-task assignment in production)
+                tasks = await database.tasks.find(
+                    {"status": {"$in": ["pending", "in_progress"]}},
+                    sort=[("scheduled_date", 1)]
+                ).limit(10).to_list(10)
+                results = tasks
                 
             elif query_type == "material_info":
                 # Get materials information
@@ -123,19 +113,12 @@ class ReadAgent(BaseAgent):
                 results = crops
                 
             elif query_type == "general_info":
-                # For general queries, get recent farm data
-                user_fields = await database.fields.find(
-                    {"farmer_line_id": user_id}, 
-                    {"_id": 1}
-                ).to_list(100)
-                
-                if user_fields:
-                    field_ids = [field["_id"] for field in user_fields]
-                    farm_data = await database.farm_data.find(
-                        {"field_id": {"$in": field_ids}},
-                        sort=[("timestamp", -1)]
-                    ).limit(5).to_list(5)
-                    results = farm_data
+                # For general queries, get recent farm data from all fields
+                farm_data = await database.farm_data.find(
+                    {},
+                    sort=[("timestamp", -1)]
+                ).limit(5).to_list(5)
+                results = farm_data
             
             logger.info(f"Retrieved {len(results)} records for query type: {query_type}")
             return results

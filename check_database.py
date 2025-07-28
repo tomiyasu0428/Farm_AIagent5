@@ -33,15 +33,15 @@ async def check_database_schema():
             print("⚠️  データベースにコレクションがありません")
             print("\n📝 期待されるコレクション構造:")
             expected_collections = [
-                "farmers - 農家マスター (主キー: line_user_id)",
+                "users - 統合ユーザー管理 (農家・作業者)",
                 "groups - グループチャット管理",
                 "fields - 圃場マスター", 
-                "tasks - タスク管理",
+                "tasks - 統合タスク管理",
                 "work_logs - 作業履歴 (自然言語→構造化データのコア)",
                 "farm_data - 時系列データ (センサー・気象・手動入力)",
                 "agent_states - LangGraph状態永続化",
-                "materials - 資材マスター (オプション)",
-                "crops - 作物マスター (オプション)"
+                "materials - 資材マスター",
+                "crops - 作物マスター"
             ]
             for col in expected_collections:
                 print(f"  • {col}")
@@ -123,11 +123,11 @@ async def create_sample_data():
     try:
         database = get_database()
         
-        # Create sample farmer
-        sample_farmer = {
+        # Create sample user (replaces farmer)
+        sample_user = {
             "line_user_id": "sample_user_123",
             "name": "田中太郎", 
-            "role": "owner",
+            "role": "farmer",
             "is_active": True,
             "profile": {
                 "farm_type": "vegetable",
@@ -135,17 +135,17 @@ async def create_sample_data():
                 "custom_fields": {},
                 "terminology": {}
             },
+            "skills": [],
             "created_at": datetime.utcnow()
         }
         
-        await database.farmers.insert_one(sample_farmer)
-        print("✅ サンプル農家データを作成しました")
+        await database.users.insert_one(sample_user)
+        print("✅ サンプルユーザーデータを作成しました")
         
-        # Create sample field
+        # Create sample field (updated schema - no direct user association)
         field_result = await database.fields.insert_one({
             "field_code": "F01",
             "name": "第1圃場",
-            "farmer_line_id": "sample_user_123", 
             "area": 1.5,
             "location": {"lat": 35.6762, "lon": 139.6503},
             "soil_type": "砂壌土",
